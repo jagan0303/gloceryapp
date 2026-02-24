@@ -5,6 +5,7 @@ const path = require("path");
 const productRoutes = require(path.join(__dirname, "routes", "productRoutes"));
 const adminRoutes = require(path.join(__dirname, "routes", "adminRoutes"));
 const emailRoutes=require(path.join(__dirname,"routes","emailRoutes"));
+const cartRoutes=require(path.join(__dirname,"routes","cartRoutes"));
 
 const app = express();
 const port = 8000;
@@ -29,6 +30,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api", productRoutes);
 app.use("/admin",adminRoutes);
 app.use("/email",emailRoutes);
+app.use("/cart",cartRoutes)
 
 
 app.get("/", (req, res) => {
