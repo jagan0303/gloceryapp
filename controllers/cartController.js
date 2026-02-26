@@ -31,7 +31,7 @@ exports.addToCart=async(req,res)=>{
  if(itemIndex>-1){
     cart.items[itemIndex].quantity+=quantity
  }else{
-    cart.items.pust({product:productId,quantity})
+    cart.items.push({product:productId,quantity})
  }
 await cart.save()
 res.json({
@@ -43,3 +43,71 @@ res.json({
 res.status(500).json({msg:error.message})
     }
 }
+exports.getCartItems=async(req,res)=>{
+    try{
+        const cart=await Cart.findOne({user:req.userId})
+        .populate("user","email")
+        .populate("items.product")
+        if(!cart){
+            return res.status(404).json({msg:"cart not found"})
+        }
+        res.json({success:true,cart})
+
+    }catch(error){
+        res.status(500).json({msg:error.message})
+    }
+}
+exports.removeFromCart = async(req, res)=>{
+    try {
+        const cart = await Cart.findOneAndUpdate(
+            {user: req.userId},
+            {$pull: {items: {product: req.params.productId}}}, 
+            {new:true}
+        )
+        res.json({
+            success:true,
+            message:"Product removed",
+            cart
+        })
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }   
+}
+exports.updateQuantity = async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+
+    const cart = await Cart.findOne({ user: req.userId });
+    if (!cart) {
+      return res.status(404).json({ msg: "Cart not found" });
+    }
+
+    if (quantity === 0) {
+      cart.items = cart.items.filter(
+        item => item.product.toString() !== productId.toString()
+      );
+      await cart.save();
+      return res.json({ success: true, message: "Product removed", cart });
+    }
+
+    const item = cart.items.find(
+      item => item.product.toString() === productId.toString()
+    );
+
+    if (!item) {
+      return res.status(404).json({ msg: "Product not in cart" });
+    }
+
+    item.quantity = quantity;
+    await cart.save();
+
+    res.json({
+      success: true,
+      message: "Quantity updated",
+      cart
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
